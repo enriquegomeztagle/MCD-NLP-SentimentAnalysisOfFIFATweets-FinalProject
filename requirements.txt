@@ -1,0 +1,6 @@
+kagglehub[hf-datasets]
+numpy
+pandas
+matplotlib
+nltk
+scikit-learn
