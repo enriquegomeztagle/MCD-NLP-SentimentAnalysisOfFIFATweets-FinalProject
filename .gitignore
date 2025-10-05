@@ -216,8 +216,5 @@ DOCS/*
 !DOCS/main.tex
 !DOCS/main.pdf
 
-SCRITPS/artifacts/
-SCRITPS/roberta_finetuned/
-SCRITPS/cache_roberta_feats/
-SCRITPS/cnn_twitter_best.h5
-SCRITPS/lstm_glove_best.h5
+SCRITPS/artifacts/cache_roberta_feats/
+SCRITPS/artifacts/roberta_finetuned/
