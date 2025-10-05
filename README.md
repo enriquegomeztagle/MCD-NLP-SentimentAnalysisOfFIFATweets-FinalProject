@@ -1,1 +1,1 @@
-# fifa-wc-tweets-sentiment-classifier
+# MCD-NLP-SentimentAnalysisOfFIFATweets-FinalProject
