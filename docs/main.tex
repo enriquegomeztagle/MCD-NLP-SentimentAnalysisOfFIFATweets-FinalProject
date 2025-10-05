@@ -67,7 +67,7 @@ The dataset is stored as a CSV file named \texttt{fifa\_world\_cup\_2022\_tweets
     \item \textbf{Sentiment}: Pre-assigned label (Positive, Neutral, or Negative).
 \end{itemize}
 The dataset is publicly available under the \textbf{CC0 1.0 Universal (Public Domain)} license, allowing unrestricted reuse and modification.
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Preprocessing}
 The preprocessing pipeline was implemented in Python using regular expressions to robustly clean and normalize tweet text while preserving sentiment cues.
 All text is first converted to lowercase. Mentions (e.g., @usernames) are replaced with the token \texttt{USR}, and URLs with \texttt{URL}.
@@ -75,7 +75,7 @@ Hashtags are preserved as semantic tokens by replacing the symbol \# with the pr
 Additionally, a curated list of emoticons (e.g., \texttt{:-)}, \texttt{XD}) and emojis (e.g., 😊, 🔥, 😭) is kept intact to retain emotional context.
 A whitelist of characters ensures that only meaningful alphanumeric and sentiment-relevant symbols (e.g., \texttt{! ? ( ) : -}) are preserved, avoiding the loss of informal markers common in social media text.
 Finally, redundant spaces are removed, resulting in clean and normalized text ready for tokenization and embedding generation.
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Feature Extraction}
 After preprocessing, the data was split with a stratified 80/20 train--test partition (\texttt{random\_state=42}).
 
@@ -91,7 +91,7 @@ We employ \textbf{cardiffnlp/twitter-roberta-base-sentiment-latest} in two modes
   \item \textbf{Feature extractor:} we freeze the backbone and compute sentence embeddings with masked mean-pooling over the last hidden states (max length 96 tokens, batch size 64, \texttt{no\_grad}). Train/test embeddings are cached to \texttt{.npy}.
   \item \textbf{Fine-tuning:} we tokenize to 128 tokens and train a classification head end-to-end using \texttt{Trainer}.
 \end{enumerate}
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Modeling}
 
 \subsubsection{Traditional Machine Learning Models}
@@ -138,12 +138,120 @@ All models are trained on the TF--IDF features and evaluated with macro-averaged
 We aggregate per-example predictions using two strategies: (i) \textbf{weighted voting} with fixed weights $\{w_{\text{RoBERTa}}=0.90,\,w_{\text{BiLSTM}}=0.76,\,w_{\text{CNN}}=0.75\}$ and a tie-breaker that favors RoBERTa; and (ii) \textbf{majority voting} (three equal votes with the same tie-break rule). We report both and retain the one with the best macro F1.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Experiments and Results}
-\subsection{Evaluation Metrics} % TODO: Add evaluation metrics
-Define accuracy, precision, recall, and F1-score. Indicate how they were computed.
 
-\subsection{Results Comparison} % TODO: Add results comparison
-Present tables and figures comparing traditional vs. deep learning models. Include confusion matrices or performance plots.
+\subsection{Evaluation Metrics}
+We evaluate models with \emph{accuracy}, \emph{precision}, \emph{recall}, and \emph{F1-score}. Let $\{(x_i,y_i)\}_{i=1}^N$ be labeled examples with $y_i \in \mathcal{C}=\{\texttt{negative},\texttt{neutral},\texttt{positive}\}$ and predictions $\hat{y}_i$.
 
+\paragraph{Accuracy.}
+\[
+\mathrm{Acc}=\frac{1}{N}\sum_{i=1}^{N}\mathbf{1}\{y_i=\hat{y}_i\}.
+\]
+
+\paragraph{Per-class precision/recall/F1.}
+For each class $c\in\mathcal{C}$, define true positives $\mathrm{TP}_c$, false positives $\mathrm{FP}_c$, and false negatives $\mathrm{FN}_c$. Then
+\[
+\mathrm{Prec}_c=\frac{\mathrm{TP}_c}{\mathrm{TP}_c+\mathrm{FP}_c},\quad
+\mathrm{Rec}_c=\frac{\mathrm{TP}_c}{\mathrm{TP}_c+\mathrm{FN}_c},\quad
+\mathrm{F1}_c= \frac{2\,\mathrm{Prec}_c\,\mathrm{Rec}_c}{\mathrm{Prec}_c+\mathrm{Rec}_c}.
+\]
+
+\paragraph{Macro-averaging.}
+To avoid dominance by frequent classes, we report \emph{macro} metrics:
+\[
+\mathrm{Prec}_{\mathrm{macro}}=\frac{1}{|\mathcal{C}|}\sum_{c\in\mathcal{C}} \mathrm{Prec}_c,\quad
+\mathrm{Rec}_{\mathrm{macro}}=\frac{1}{|\mathcal{C}|}\sum_{c\in\mathcal{C}} \mathrm{Rec}_c,\quad
+\mathrm{F1}_{\mathrm{macro}}=\frac{1}{|\mathcal{C}|}\sum_{c\in\mathcal{C}} \mathrm{F1}_c.
+\]
+All metrics are computed with \texttt{scikit-learn} using the label order \texttt{[negative, neutral, positive]} and \texttt{zero\_division=0}. Confusion matrices follow the same class order.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Results Comparison}
+\paragraph{Model leaderboard.}
+We compare traditional, deep, and transformer-based models on the test split. Table~\ref{tab:model-comparison} summarizes macro metrics; Figure~\ref{fig:model-f1-comparison} visualizes macro-F1 across models.
+
+\begin{table}[H]
+  \centering
+  \caption{Model comparison on the test set. Macro-averaged metrics; higher is better.}
+  \label{tab:model-comparison}
+  \input{../SCRITPS/artifacts/tables/model_comparison_metrics.tex}
+\end{table}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=.82\linewidth]{../SCRITPS/artifacts/figures/model_f1_comparison.png}
+  \caption{Macro-F1 across all models.}
+  \label{fig:model-f1-comparison}
+\end{figure}
+
+\paragraph{Per-class analysis.}
+For the best model (top row in Table~\ref{tab:model-comparison}), we report its confusion matrix and per-class metrics:
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=.80\linewidth]{../SCRITPS/artifacts/figures/best_model_cm.png}
+  \caption{Confusion matrix for the best model (label order: negative, neutral, positive).}
+  \label{fig:best-confusion}
+\end{figure}
+
+\begin{table}[H]
+  \centering
+  \caption{Per-class report of the best model (precision, recall, F1, and support).}
+  \label{tab:best-class-report}
+  % Generated file; reflects the same label order
+  \input{../SCRITPS/artifacts/tables/best_model_classification_report.tex}
+\end{table}
+
+\paragraph{Probability-based curves.}
+For models that output class probabilities (e.g., Logistic Regression, Random Forest, CNN, BiLSTM, RoBERTa heads and fine-tuned), we plot macro ROC and macro PR curves that are available in the Repository.\\
+The figure below shows the macro ROC curve for the fine-tuned RoBERTa model.
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=.55\linewidth]{../SCRITPS/artifacts/figures/curves_roberta_fine-tuned_(twitter-roberta-base-sentiment-latest)_roc_macro.png}
+  \caption{Macro ROC for a probability-capable model (example: fine-tuned RoBERTa).}
+  \label{fig:roc-example}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=.55\linewidth]{../SCRITPS/artifacts/figures/curves_roberta_fine-tuned_(twitter-roberta-base-sentiment-latest)_pr_macro.png}
+  \caption{Macro PR for the same model as Figure~\ref{fig:roc-example}.}
+  \label{fig:pr-example}
+\end{figure}
+The macro ROC curve hugs the top-left corner (AUC $\approx 0.98$), reflecting strong class-averaged discrimination. Across reasonable thresholds, the model attains high true-positive rates at low false-positive rates for most classes.
+
+\paragraph{Training dynamics.}
+We report training/validation curves for neural models to show convergence and regularization behavior:
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=.70\linewidth]{../SCRITPS/artifacts/figures/bilstm+attention_lstm_stage1_acc.png}
+  \includegraphics[width=.70\linewidth]{../SCRITPS/artifacts/figures/bilstm+attention_lstm_stage1_loss.png}
+  \caption{Example training curves (BiLSTM+Attention). Additional stages/architectures are in the Repository.}
+  \label{fig:training-curves}
+\end{figure}
+Stage-1 learning curves exhibit steady convergence: validation accuracy rises and validation loss falls over epochs. The train–val gap stays small, indicating regularization (dropout/L2) plus early stopping effectively limit overfitting.
+
+\paragraph{Representation analysis}
+When using RoBERTa as a frozen feature extractor, we visualize test-set embeddings with UMAP to inspect class separability:
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=.75\linewidth]{../SCRITPS/artifacts/figures/roberta_fe_test_umap.png}
+  \caption{UMAP of mean-pooled RoBERTa embeddings (test split).}
+  \label{fig:umap-roberta}
+\end{figure}
+The UMAP of mean-pooled RoBERTa embeddings on the test set shows well-separated clusters for positive and negative, while neutral occupies a transitional region with more overlap. This suggests the transformer captures polarity clearly, with remaining ambiguity concentrated around the neutral boundary.
+
+\paragraph{Traditional vs.\ deep vs.\ transformers.}
+We observe three regimes:\\
+(i) \emph{Traditional} TF--IDF models are fast and lightweight but lag in macro-F1 ($0.677$--$0.708$), reflecting limited contextualization.\\
+(ii) \emph{Deep, non-transformer} models with GloVe (CNN / BiLSTM) recover part of the gap ($0.759$--$0.764$) yet still struggle on borderline \textit{neutral} cases.\\
+(iii) \emph{Transformers} dominate: RoBERTa as a frozen feature extractor with a Logistic Regression head already reaches $0.889$ macro-F1, while full fine-tuning yields $0.899$ (+1.0 pp F1 and +1.2 pp macro-Recall), indicating that end-to-end adaptation mainly improves recall on ambiguous tweets.\\
+Naïve voting ensembles (0.809) did not surpass the best single model; gains likely require calibrated stacking or error-aware weighting.\\
+For transparency and reproducibility, we include per-model artifacts:
+\begin{itemize}
+  \item Confusion matrices: \texttt{figures/*\_cm.png}
+  \item Per-class reports: \texttt{tables/classification\_report\_\_*.tex}
+\end{itemize}
+
+\paragraph{General findings.}
+Fine-tuned \textbf{RoBERTa} achieved the best test performance, with $\mathrm{F1}_{\mathrm{macro}}=0.899$ (Accuracy $0.898$, Precision $0.898$, Recall $0.901$). Using RoBERTa as a frozen feature extractor + Logistic Regression head was a close second ($\mathrm{F1}_{\mathrm{macro}}=0.889$), indicating that most of the gains come from pretrained Twitter-domain representations, while end-to-end fine-tuning adds a modest but consistent improvement ($\approx +1.0\,\mathrm{pp}$ in $\mathrm{F1}_{\mathrm{macro}}$ and $+1.2\,\mathrm{pp}$ in macro-Recall). Among non-transformer neural models, \textbf{BiLSTM+Attention (GloVe--Twitter)} reached $\mathrm{F1}_{\mathrm{macro}}=0.764$, slightly ahead of \textbf{CNN (SE+Attn)} at $0.759$. Traditional TF--IDF baselines trailed behind (\textbf{Logistic Regression} $0.708$, \textbf{LinearSVC} $0.699$, \textbf{Random Forest} $0.677$ macro-F1), underscoring the value of contextual representations for tweet sentiment. The two ensemble variants (weighted and majority voting) yielded $0.809$ macro-F1, notably below the single best transformer models, suggesting that naive, fixed-weight voting did not exploit complementary errors; learned stacking/calibration might be required to help ensembles close the gap. Confusion matrices (best model vs.\ neural/classic baselines) illustrate that most residual errors concentrate around the \emph{neutral} class boundaries, consistent with prior observations on short, informal texts.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Discussion}
 \subsection{Analysis of Results}
@@ -162,7 +270,6 @@ Propose next steps — for instance, expanding to multilingual sentiment, fine-t
 Briefly summarize the overall takeaway: what your results show and the main contributions of your project.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{References}
 \begin{thebibliography}{9}
 \bibitem{ref1} Barnaghi, P., Ghaffari, P., \& Breslin, J. (2016). Opinion mining and sentiment polarity on Twitter and correlation between events and sentiment. \textit{Journal of Web Semantics}, 30, 1–11.
 \bibitem{ref2} Venkatesh, K., et al. (2019). Deep learning-based hybrid CNN-LSTM model for sentiment classification on sports tweets. \textit{Procedia Computer Science}, 152, 341–348.
