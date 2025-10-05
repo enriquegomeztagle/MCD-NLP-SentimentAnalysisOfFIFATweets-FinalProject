@@ -1,0 +1,16 @@
+\begin{tabular}{lrrrr}
+\toprule
+Model & Accuracy & Precision & Recall & F1 \\
+\midrule
+RoBERTa fine-tuned (twitter-roberta-base-sentiment-latest) & 0.897800 & 0.897500 & 0.901100 & 0.899000 \\
+RoBERTa feature extractor (LogReg head) & 0.886900 & 0.889200 & 0.889000 & 0.889100 \\
+RoBERTa feature extractor (LinearSVC head) & 0.884200 & 0.886700 & 0.886100 & 0.886300 \\
+Ensemble (Weighted Voting) & 0.809000 & 0.806300 & 0.815200 & 0.809000 \\
+Ensemble (Majority Voting) & 0.809000 & 0.806300 & 0.815200 & 0.809000 \\
+BiLSTM+Attention (GloVe-Twitter) & 0.764100 & 0.762100 & 0.769300 & 0.764200 \\
+CNN (Twitter SE+Attn) & 0.759200 & 0.757100 & 0.766900 & 0.759300 \\
+Logistic Regression (TF-IDF) & 0.706800 & 0.705000 & 0.711900 & 0.707800 \\
+LinearSVC (TF-IDF) & 0.698600 & 0.700100 & 0.699000 & 0.699400 \\
+RandomForest (TF-IDF) & 0.677300 & 0.686900 & 0.671900 & 0.677400 \\
+\bottomrule
+\end{tabular}
