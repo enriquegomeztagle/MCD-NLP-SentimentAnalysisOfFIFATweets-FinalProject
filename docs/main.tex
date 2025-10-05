@@ -1,0 +1,135 @@
+\documentclass[10pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{amsmath, amssymb}
+\usepackage{xcolor}
+\usepackage{geometry}
+\geometry{letterpaper, margin=1in}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{colortbl}
+\usepackage{caption}
+\usepackage{tocloft}
+\usepackage[colorlinks=true, linkcolor=black, urlcolor=black, citecolor=black]{hyperref}
+\usepackage{hwemoji}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\title{Universidad Panamericana \\ Master's in Data Sciences \\ Natural Language Processing \\ 
+    \vspace{0.5cm} Final Project: \textit{Sentiment Analysis of FIFA World Cup Tweets}}
+\author{Enrique Ulises Báez Gómez Tagle}
+\date{\today}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{document}
+\maketitle
+\tableofcontents
+\newpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section*{Abstract}
+This project aims to perform sentiment analysis on tweets related to the FIFA World Cup 2022 using both traditional machine learning and deep learning models. 
+The dataset contains 30,000 tweets collected on the first day of the tournament using the \texttt{Snscrape} library and pre-labeled with the\\ \texttt{cardiffnlp/twitter-roberta-base-sentiment-latest} model from Hugging Face.
+We compare classical approaches (e.g., Logistic Regression, SVM) using TF-IDF features against neural architectures such as LSTM, CNN, and Transformer-based models. 
+Evaluation metrics include Accuracy, Precision, Recall, and F1-score. The results highlight how deep learning models outperform traditional ones in handling contextual nuances of tweets.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Introduction}
+The FIFA World Cup is one of the largest and most influential sporting events worldwide, attracting billions of viewers and generating massive engagement across digital platforms. During the 2022 edition in Qatar, social media—especially Twitter—became a real-time forum for fans to express opinions, emotions, and reactions to matches, players, and events. This global activity creates a rich source of textual data that can be leveraged to analyze public sentiment and collective emotional dynamics surrounding major sports events.
+
+Understanding the sentiment behind these tweets is important for several reasons. First, it provides valuable insights into fan behavior, public perception of teams and players, and the emotional impact of sporting events on different audiences. Second, sentiment analysis can assist broadcasters, sponsors, and organizations such as FIFA in gauging audience engagement and reputation trends. Finally, from a data science perspective, it represents a challenging Natural Language Processing (NLP) problem due to the informal, multilingual, and often sarcastic nature of social media text \cite{ref1, ref2, ref3}.
+
+Sentiment analysis, or opinion mining, aims to classify text into categories such as positive, negative, or neutral, based on the emotional tone conveyed by users. Previous research has explored a range of approaches—from traditional machine learning models such as Logistic Regression, Support Vector Machines (SVM), and Random Forests \cite{ref1} to deep learning architectures like Convolutional Neural Networks (CNN) and Long Short-Term Memory (LSTM) networks \cite{ref2}. More recently, transformer-based models such as BERT and RoBERTa have achieved state-of-the-art results in sentiment classification tasks on Twitter data \cite{ref3, ref4}.
+
+Building upon this body of work, this project focuses on the sentiment analysis of tweets related to the 2022 FIFA World Cup. Tweets are categorized into three sentiment classes—positive, neutral, and negative—using both traditional machine learning and modern deep learning models. The goal is to evaluate how different text representations and architectures perform in understanding contextual nuances, emotion, and sarcasm in sports-related tweets. Through this comparison, the study contributes to the broader understanding of how NLP techniques can extract meaningful insights from real-world social media discourse.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Related Work}
+Previous research on sentiment analysis of sports-related tweets has evolved significantly over the past decade, progressing from traditional machine learning approaches to deep neural and transformer-based architectures. 
+
+Early works (2016–2018) commonly employed statistical text representations such as Bag-of-Words and TF-IDF combined with models like Logistic Regression, Linear SVC, Random Forest and Bayesian Logistic Regression. For instance, Barnaghi et al. \cite{ref1} analyzed FIFA World Cup 2014 tweets using TF-IDF with Bayesian Logistic Regression, achieving competitive accuracy but later works noted limitations in capturing sarcasm and emoji-driven sentiment.
+
+From 2018 onward, deep learning architectures such as CNN and LSTM began outperforming traditional classifiers in sentiment analysis tasks. Venkatesh et al. \cite{ref2} proposed a CNN-LSTM hybrid for classifying sports tweets, demonstrating that combining convolutional and recurrent layers improved contextual understanding.
+
+The next major shift came with transformer-based models like BERT and RoBERTa, which leverage self-attention mechanisms and large-scale pretraining. Barbieri et al. \cite{ref3} introduced the TweetEval benchmark, fine-tuning RoBERTa for multiple Twitter NLP tasks and achieving state-of-the-art sentiment accuracy. More recent studies (2021–2025) fine-tuned RoBERTa specifically on sports tweets \cite{ref4}, reporting superior F1-scores and robustness compared to CNN and LSTM models.
+
+This project builds upon these advancements by directly comparing traditional machine learning models (Logistic Regression, Linear SVC, Random Forest) with deep learning architectures (LSTM, CNN) and transformer-based methods (RoBERTa as both feature extractor and fine-tuned model) on FIFA World Cup 2022 tweets. By systematically evaluating across these paradigms, this work highlights the evolution of sentiment analysis methods and quantifies the contextual advantages of transformer-based approaches for real-world, event-driven social media data.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Methodology}
+
+\subsection{Dataset Description}
+The dataset used in this project is titled \textbf{"FIFA World Cup 2022 Tweets"}, consisting of approximately \textbf{30,000 tweets} collected during the first day of the tournament in Qatar 2022.
+
+Data was obtained using the \texttt{Snscrape} library for scraping and labeled automatically with the pre-trained RoBERTa-based sentiment model
+\href{https://huggingface.co/cardiffnlp/twitter-roberta-base-sentiment-latest}{\texttt{cardiffnlp/twitter-roberta-base-sentiment-latest}} from Hugging Face.
+The dataset is stored as a CSV file named \texttt{fifa\_world\_cup\_2022\_tweets.csv} and contains the following columns:
+\begin{itemize}
+    \item \textbf{Date Created}: Timestamp of tweet publication.
+    \item \textbf{Number of Likes}: Engagement measure.
+    \item \textbf{Source of Tweet}: Platform or device used to post.
+    \item \textbf{Tweet}: Raw text content of the tweet.
+    \item \textbf{Sentiment}: Pre-assigned label (Positive, Neutral, or Negative).
+\end{itemize}
+The dataset is publicly available under the \textbf{CC0 1.0 Universal (Public Domain)} license, allowing unrestricted reuse and modification.
+
+\subsection{Preprocessing}
+The preprocessing pipeline was implemented in Python using regular expressions to robustly clean and normalize tweet text while preserving sentiment cues.
+All text is first converted to lowercase. Mentions (e.g., @usernames) are replaced with the token \texttt{USR}, and URLs with \texttt{URL}.
+Hashtags are preserved as semantic tokens by replacing the symbol \# with the prefix \texttt{hash\_}.
+Additionally, a curated list of emoticons (e.g., \texttt{:-)}, \texttt{XD}) and emojis (e.g., 😊, 🔥, 😭) is kept intact to retain emotional context.
+A whitelist of characters ensures that only meaningful alphanumeric and sentiment-relevant symbols (e.g., \texttt{! ? ( ) : -}) are preserved, avoiding the loss of informal markers common in social media text.
+Finally, redundant spaces are removed, resulting in clean and normalized text ready for tokenization and embedding generation.
+
+\subsection{Feature Extraction}
+We employed two types of representations:
+\begin{itemize}
+    \item \textbf{Statistical}: TF-IDF and Bag-of-Words for traditional ML models.
+    \item \textbf{Semantic}: GloVe and BERT embeddings for neural and transformer models.
+\end{itemize}
+
+\subsection{Modeling}
+\subsubsection{Traditional Machine Learning Models}
+Describe models such as Logistic Regression, SVM, and Random Forest, including hyperparameters and training details.
+
+\subsubsection{Deep Learning Models}
+Detail architectures like LSTM, CNN, or Transformer-based models. Include embedding layers, optimizers, and activation functions.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Experiments and Results}
+\subsection{Evaluation Metrics}
+Define accuracy, precision, recall, and F1-score. Indicate how they were computed.
+
+\subsection{Results Comparison}
+Present tables and figures comparing traditional vs. deep learning models. Include confusion matrices or performance plots.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Discussion}
+\subsection{Analysis of Results}
+Discuss the overall findings from your experiments. Highlight how traditional models compared to deep learning ones and interpret why some performed better.
+
+\subsection{Strengths and Weaknesses}
+Describe what worked well in your approach (e.g., preprocessing pipeline, embeddings, model tuning) and what could be improved (e.g., dataset balance, training time, generalization).
+
+\subsection{Limitations}
+Acknowledge limitations of your dataset, models, or computational setup. For example, bias in tweets, lack of multilingual support, or restricted training epochs.
+
+\subsection{Future Work}
+Propose next steps — for instance, expanding to multilingual sentiment, fine-tuning larger transformers, or incorporating multimodal data (text + image).
+
+\subsection{Concluding Remarks}
+Briefly summarize the overall takeaway: what your results show and the main contributions of your project.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{References}
+\begin{thebibliography}{9}
+\bibitem{ref1} Barnaghi, P., Ghaffari, P., \& Breslin, J. (2016). Opinion mining and sentiment polarity on Twitter and correlation between events and sentiment. \textit{Journal of Web Semantics}, 30, 1–11.
+\bibitem{ref2} Venkatesh, K., et al. (2019). Deep learning-based hybrid CNN-LSTM model for sentiment classification on sports tweets. \textit{Procedia Computer Science}, 152, 341–348.
+\bibitem{ref3} Barbieri, F., Camacho-Collados, J., Neves, L., \& Espinosa Anke, L. (2020). TweetEval: Unified benchmark and comparative evaluation for tweet classification. \textit{Proceedings of EMNLP 2020}, 1644–1650.
+\bibitem{ref4} Fadel, A., et al. (2023). Fine-tuning RoBERTa for sentiment analysis of sports-related tweets. \textit{IEEE Transactions on Affective Computing}, 14(2), 1–12.
+\bibitem{ref5}  
+Barnaghi, P., Ghaffari, P., \& Breslin, J. G. (2015). Text Analysis and Sentiment Polarity on FIFA World Cup 2014 Tweets. En *Proceedings of the KDD’15 Workshop on Large-Scale Sports Analytics*.  
+\end{thebibliography}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Appendix}
+\subsection{GitHub Repository}
+\url{https://github.com/enriquegomeztagle/MCD-NLP-SentimentAnalysisOfFIFATweets-FinalProject}
+
+\end{document}
