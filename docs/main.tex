@@ -239,36 +239,32 @@ When using RoBERTa as a frozen feature extractor, we visualize test-set embeddin
 The UMAP of mean-pooled RoBERTa embeddings on the test set shows well-separated clusters for positive and negative, while neutral occupies a transitional region with more overlap. This suggests the transformer captures polarity clearly, with remaining ambiguity concentrated around the neutral boundary.
 
 \paragraph{Traditional vs.\ deep vs.\ transformers.}
-We observe three regimes:\\
-(i) \emph{Traditional} TF--IDF models are fast and lightweight but lag in macro-F1 ($0.677$--$0.708$), reflecting limited contextualization.\\
-(ii) \emph{Deep, non-transformer} models with GloVe (CNN / BiLSTM) recover part of the gap ($0.759$--$0.764$) yet still struggle on borderline \textit{neutral} cases.\\
-(iii) \emph{Transformers} dominate: RoBERTa as a frozen feature extractor with a Logistic Regression head already reaches $0.889$ macro-F1, while full fine-tuning yields $0.899$ (+1.0 pp F1 and +1.2 pp macro-Recall), indicating that end-to-end adaptation mainly improves recall on ambiguous tweets.\\
-Naïve voting ensembles (0.809) did not surpass the best single model; gains likely require calibrated stacking or error-aware weighting.\\
-For transparency and reproducibility, we include per-model artifacts:
-\begin{itemize}
-  \item Confusion matrices: \texttt{figures/*\_cm.png}
-  \item Per-class reports: \texttt{tables/classification\_report\_\_*.tex}
-\end{itemize}
-
-\paragraph{General findings.}
-Fine-tuned \textbf{RoBERTa} achieved the best test performance, with $\mathrm{F1}_{\mathrm{macro}}=0.899$ (Accuracy $0.898$, Precision $0.898$, Recall $0.901$). Using RoBERTa as a frozen feature extractor + Logistic Regression head was a close second ($\mathrm{F1}_{\mathrm{macro}}=0.889$), indicating that most of the gains come from pretrained Twitter-domain representations, while end-to-end fine-tuning adds a modest but consistent improvement ($\approx +1.0\,\mathrm{pp}$ in $\mathrm{F1}_{\mathrm{macro}}$ and $+1.2\,\mathrm{pp}$ in macro-Recall). Among non-transformer neural models, \textbf{BiLSTM+Attention (GloVe--Twitter)} reached $\mathrm{F1}_{\mathrm{macro}}=0.764$, slightly ahead of \textbf{CNN (SE+Attn)} at $0.759$. Traditional TF--IDF baselines trailed behind (\textbf{Logistic Regression} $0.708$, \textbf{LinearSVC} $0.699$, \textbf{Random Forest} $0.677$ macro-F1), underscoring the value of contextual representations for tweet sentiment. The two ensemble variants (weighted and majority voting) yielded $0.809$ macro-F1, notably below the single best transformer models, suggesting that naive, fixed-weight voting did not exploit complementary errors; learned stacking/calibration might be required to help ensembles close the gap. Confusion matrices (best model vs.\ neural/classic baselines) illustrate that most residual errors concentrate around the \emph{neutral} class boundaries, consistent with prior observations on short, informal texts.
+At a glance (Table~\ref{tab:model-comparison}), TF--IDF baselines are lowest (macro-F1 $0.677$--$0.708$), GloVe-based neural models close part of the gap ($0.759$--$0.764$), and transformer variants lead ($0.889$ with frozen RoBERTa + LR; $0.899$ with fine-tuning). Simple voting ensembles ($0.809$) did not outperform the best single model. We keep this section descriptive and defer interpretation to Section~\ref{sec:discussion}.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Discussion}
+\section{Discussion}\label{sec:discussion}
+
 \subsection{Analysis of Results}
-Discuss the overall findings from your experiments. Highlight how traditional models compared to deep learning ones and interpret why some performed better.
+Fine-tuned \textbf{RoBERTa} achieved the highest test performance (macro-F1 $=0.899$; Accuracy $0.898$, Precision $0.898$, Recall $0.901$), while using RoBERTa as a frozen feature extractor with a Logistic Regression head was a close second (macro-F1 $=0.889$). The $\approx +1.0$ pp macro-F1 and $+1.2$ pp macro-Recall gains from end-to-end fine-tuning suggest that task-specific adaptation mainly reduces errors on boundary (often \emph{neutral}) tweets. Non-transformer neural models (BiLSTM+Attention $0.764$, CNN with SE+Attn $0.759$) clearly outperform TF--IDF baselines (Logistic Regression $0.708$, LinearSVC $0.699$, Random Forest $0.677$) but still trail transformers, consistent with the limits of static word embeddings and shallower context modeling. Confusion matrices (Fig.~\ref{fig:best-confusion}) and the UMAP projection (Fig.~\ref{fig:umap-roberta}) indicate that residual confusion is concentrated around the \emph{neutral} region.
+Both ensemble variants (weighted and majority voting) reached macro-F1 $=0.809$, below the best single transformer. Operationally, the frozen RoBERTa + LR head offers a strong accuracy--latency trade-off, whereas fine-tuning yields a small but reliable boost at higher compute cost.
 
 \subsection{Strengths and Weaknesses}
-Describe what worked well in your approach (e.g., preprocessing pipeline, embeddings, model tuning) and what could be improved (e.g., dataset balance, training time, generalization).
+\paragraph{Strengths.} 
+(i) A Twitter-aware preprocessing pipeline preserves emojis/emoticons and hashtag semantics; (ii) the study spans three modeling families (TF--IDF, GloVe-based neural, transformers) for a fair comparison; (iii) careful training (class weights, staged unfreezing, cosine restarts) stabilizes neural models; (iv) full reproducibility: seeds, cached embeddings, and exported artifacts (tables/figures).
+\paragraph{Weaknesses.}
+(i) The naive voting ensembles (fixed weights/majority) underperformed the best single transformer, indicating limited error complementarity or poor weighting; (ii) compute cost: transformer fine-tuning is heavier than TF--IDF/Glove baselines.
 
-\subsection{Limitations} % TODO: Add limitations
-Acknowledge limitations of your dataset, models, or computational setup. For example, bias in tweets, lack of multilingual support, or restricted training epochs.
+\subsection{Limitations}
+This study has several limitations. First, labels are derived from \texttt{cardiffnlp/twitter-roberta-base-sentiment-latest}, which we also use as a backbone; this ``teacher--student'' setup can bias evaluation toward transformer variants that approximate the teacher's decision boundary. Second, the dataset covers only the first day of the tournament, limiting topical and temporal diversity. Third, global tweets are likely multilingual, while this study worked in English, it may not perform in the same way with other languages.
+
+\paragraph{Compute constraints.}
+We trained under limited GPU memory and time on a single device, which constrained batch sizes, sequence lengths, and training schedules. Consequently, we could not run extensive hyperparameter sweeps or multi-seed cross-validation, nor explore larger backbones (e.g., RoBERTa-large, DeBERTa-v3-large, XLM-Roberta large), longer-context inputs, or calibration-aware/stacked ensembles. These restrictions likely cap absolute performance and stability, so the reported scores should be viewed as conservative lower bounds.
 
 \subsection{Future Work}
-Propose next steps — for instance, expanding to multilingual sentiment, fine-tuning larger transformers, or incorporating multimodal data (text + image).
+(i) Evaluate cross-domain generalization (other tournament days, clubs, other sports) and cross-lingual robustness (e.g., XLM-T, mDeBERTa, or multilingual RoBERTa); (iii) replace naive voting with calibrated stacking: temperature scaling/Platt scaling per model, then a meta-learner on per-class probabilities; (iv) ablations on preprocessing (emoji/hashtag handling), sequence length, and embedding choices; (v) explore larger or instruction-tuned transformers and prompt-based zero-/few-shot setups; (vi) address \emph{neutral} with margin-aware losses or focal loss and targeted augmentation for borderline cases.
 
 \subsection{Concluding Remarks}
-Briefly summarize the overall takeaway: what your results show and the main contributions of your project.
-
+Our study confirms the advantage of transformer-based representations for Twitter sentiment: most gains stem from domain-pretrained RoBERTa features, with fine-tuning providing a small but reliable boost—particularly on ambiguous tweets. Classic TF--IDF and GloVe-based neural models remain competitive as efficient baselines, yet they struggle on \emph{neutral}.\\
+Future work should prioritize cross-sports-domain and cross-lingual generalization, calibration-aware stacking over naive voting, systematic ablations of preprocessing/sequence length/embeddings, scaling to larger or instruction-tuned transformers and prompt-based zero/few-shot setups, and strengthening the \emph{neutral} boundary via margin-aware or focal losses with targeted augmentation.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{thebibliography}{9}
 \bibitem{ref1} Barnaghi, P., Ghaffari, P., \& Breslin, J. (2016). Opinion mining and sentiment polarity on Twitter and correlation between events and sentiment. \textit{Journal of Web Semantics}, 30, 1–11.
