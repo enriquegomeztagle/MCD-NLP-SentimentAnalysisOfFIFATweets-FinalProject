@@ -211,6 +211,7 @@ __marimo__/
 .vscode/
 
 **/desktop.ini
+**/**/desktop.ini
 
 DOCS/*
 !DOCS/main.tex
