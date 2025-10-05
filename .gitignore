@@ -205,3 +205,12 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+########################## CUSTOM ##########################
+.DS_Store
+.vscode/
+DOCS/*
+!DOCS/main.tex
+!DOCS/main.pdf
+SCRITPS/roberta_finetuned/
+SCRITPS/cache_roberta_feats/
