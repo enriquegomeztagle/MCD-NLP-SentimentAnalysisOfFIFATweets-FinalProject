@@ -27,7 +27,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section*{Abstract}
 This project aims to perform sentiment analysis on tweets related to the FIFA World Cup 2022 using both traditional machine learning and deep learning models. 
-The dataset contains 30,000 tweets collected on the first day of the tournament using the \texttt{Snscrape} library and pre-labeled with the\\ \texttt{cardiffnlp/twitter-roberta-base-sentiment-latest} model from Hugging Face.
+The dataset contains $\approx25,000$ tweets collected on the first day of the tournament using the \texttt{Snscrape} library and pre-labeled with the\\ \texttt{cardiffnlp/twitter-roberta-base-sentiment-latest} model from Hugging Face.
 We compare classical approaches (e.g., Logistic Regression, SVM) using TF-IDF features against neural architectures such as LSTM, CNN, and Transformer-based models. 
 Evaluation metrics include Accuracy, Precision, Recall, and F1-score. The results highlight how deep learning models outperform traditional ones in handling contextual nuances of tweets.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -68,28 +68,48 @@ The dataset is stored as a CSV file named \texttt{fifa\_world\_cup\_2022\_tweets
 \end{itemize}
 The dataset is publicly available under the \textbf{CC0 1.0 Universal (Public Domain)} license, allowing unrestricted reuse and modification.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Preprocessing}
+\subsection{Preprocessing \& Balancing}
+\paragraph{Preprocessing.}
 The preprocessing pipeline was implemented in Python using regular expressions to robustly clean and normalize tweet text while preserving sentiment cues.
 All text is first converted to lowercase. Mentions (e.g., @usernames) are replaced with the token \texttt{USR}, and URLs with \texttt{URL}.
 Hashtags are preserved as semantic tokens by replacing the symbol \# with the prefix \texttt{hash\_}.
 Additionally, a curated list of emoticons (e.g., \texttt{:-)}, \texttt{XD}) and emojis (e.g., 😊, 🔥, 😭) is kept intact to retain emotional context.
 A whitelist of characters ensures that only meaningful alphanumeric and sentiment-relevant symbols (e.g., \texttt{! ? ( ) : -}) are preserved, avoiding the loss of informal markers common in social media text.
 Finally, redundant spaces are removed, resulting in clean and normalized text ready for tokenization and embedding generation.
+\paragraph{Balancing.}
+Re-balancing techniques were not applied because the class distribution was moderately balanced: \textit{Positive} $n=8{,}489$ (37.7\%), \textit{Neutral} $n=8{,}251$ (36.6\%), and \textit{Negative} $n=5{,}784$ (25.7\%), for a total of $N=22{,}524$. The imbalance ratio
+$IR=\frac{\max_c n_c}{\min_c n_c}=1.47$ stayed below our predefined threshold ($IR<1.5$), so we trained without resampling and simply monitored per-class metrics.
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.6\linewidth]{../SCRITPS/artifacts/figures/class_distribution_full.png}
+  \caption{Class distribution in the full dataset: \textit{Positive} 8{,}489; \textit{Neutral} 8{,}251; \textit{Negative} 5{,}784.}
+  \label{fig:class-dist}
+\end{figure}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Feature Extraction}
 After preprocessing, the data was split with a stratified 80/20 train--test partition (\texttt{random\_state=42}).
 
+\paragraph{Protocol (no leakage \& reproducibility).}x
+All vectorizers/tokenizers were \textbf{fit exclusively on the training split} and then reused to transform
+validation/test without refitting or peeking at test labels. We fixed random seeds for reproducibility
+(Python \texttt{random}, NumPy, TensorFlow, and PyTorch) and used the same stratified splits across all models.
+
 \paragraph{Statistical representations.}
 For traditional ML models, we use a TF--IDF vectorizer with \textit{max\_features} $=50{,}000$, n-grams $(1,3)$, \textit{min\_df}$=2$, and English stopwords. The resulting sparse matrix feeds Logistic Regression, Linear SVM, and Random Forest.
+\textit{Leakage control:} the TF--IDF vectorizer was fit on the \textbf{training texts only} and then applied
+unchanged to validation/test.
 
 \paragraph{Semantic representations (word embeddings).}
 For sequence models, we use \textbf{GloVe-Twitter-200} (via \texttt{gensim}). A Keras \textit{Tokenizer} (\textit{num\_words}$=50{,}000$, explicit \texttt{<OOV>}) builds the vocabulary; sequences are padded/truncated to $L=180$. The embedding matrix is aligned to this vocab, with zero vector at the padding index and the \texttt{<OOV>} vector set to the mean of known embeddings.
+\textit{Vocabulary policy:} the Keras \texttt{Tokenizer} was fit on the \textbf{training split only};
+the learned vocabulary and index mapping were reused as-is for validation/test.
 
 \paragraph{Transformer representations.}
-We employ \textbf{cardiffnlp/twitter-roberta-base-sentiment-latest} in two modes:
+\textbf{cardiffnlp/twitter-roberta-base-sentiment-latest} was used in two modes:
+\textit{Tokenizer/splits:} the Hugging Face tokenizer was fine-tunned in the training split.
 \begin{enumerate}
-  \item \textbf{Feature extractor:} we freeze the backbone and compute sentence embeddings with masked mean-pooling over the last hidden states (max length 96 tokens, batch size 64, \texttt{no\_grad}). Train/test embeddings are cached to \texttt{.npy}.
-  \item \textbf{Fine-tuning:} we tokenize to 128 tokens and train a classification head end-to-end using \texttt{Trainer}.
+  \item \textbf{Feature extractor:} backbone was frozen and compute sentence embeddings with masked mean-pooling over the last hidden states (max length 96 tokens, batch size 64, \texttt{no\_grad}). Train/test embeddings are cached to \texttt{.npy}.
+  \item \textbf{Fine-tuning:} tokenization to 128 tokens and train a classification head end-to-end using \texttt{Trainer}.
 \end{enumerate}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Modeling}
@@ -271,8 +291,8 @@ Future work should prioritize cross-sports-domain and cross-lingual generalizati
 \bibitem{ref2} Venkatesh, K., et al. (2019). Deep learning-based hybrid CNN-LSTM model for sentiment classification on sports tweets. \textit{Procedia Computer Science}, 152, 341–348.
 \bibitem{ref3} Barbieri, F., Camacho-Collados, J., Neves, L., \& Espinosa Anke, L. (2020). TweetEval: Unified benchmark and comparative evaluation for tweet classification. \textit{Proceedings of EMNLP 2020}, 1644–1650.
 \bibitem{ref4} Fadel, A., et al. (2023). Fine-tuning RoBERTa for sentiment analysis of sports-related tweets. \textit{IEEE Transactions on Affective Computing}, 14(2), 1–12.
-\bibitem{ref5}  
-Barnaghi, P., Ghaffari, P., \& Breslin, J. G. (2015). Text Analysis and Sentiment Polarity on FIFA World Cup 2014 Tweets. En *Proceedings of the KDD’15 Workshop on Large-Scale Sports Analytics*.  
+\bibitem{ref5} Barnaghi, P., Ghaffari, P., \& Breslin, J. G. (2015). Text Analysis and Sentiment Polarity on FIFA World Cup 2014 Tweets. En *Proceedings of the KDD’15 Workshop on Large-Scale Sports Analytics*.  
+\bibitem{ref6} Tirendaz Academy, “FIFA World Cup 2022 Tweets,” Kaggle dataset. Available: https://www.kaggle.com/datasets/tirendazacademy/fifa-world-cup-2022-tweets/data
 \end{thebibliography}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Appendix}
