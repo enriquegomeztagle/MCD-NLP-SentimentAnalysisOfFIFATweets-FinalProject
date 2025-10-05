@@ -1,0 +1,11 @@
+Model,Accuracy,Precision,Recall,F1
+RoBERTa fine-tuned (twitter-roberta-base-sentiment-latest),0.8978,0.8975,0.9011,0.899
+RoBERTa feature extractor (LogReg head),0.8869,0.8892,0.889,0.8891
+RoBERTa feature extractor (LinearSVC head),0.8842,0.8867,0.8861,0.8863
+Ensemble (Weighted Voting),0.809,0.8063,0.8152,0.809
+Ensemble (Majority Voting),0.809,0.8063,0.8152,0.809
+BiLSTM+Attention (GloVe-Twitter),0.7641,0.7621,0.7693,0.7642
+CNN (Twitter SE+Attn),0.7592,0.7571,0.7669,0.7593
+Logistic Regression (TF-IDF),0.7068,0.705,0.7119,0.7078
+LinearSVC (TF-IDF),0.6986,0.7001,0.699,0.6994
+RandomForest (TF-IDF),0.6773,0.6869,0.6719,0.6774

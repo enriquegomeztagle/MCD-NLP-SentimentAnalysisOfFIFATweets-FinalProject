@@ -1,0 +1,12 @@
+[
+    {"Model": "Logistic Regression (TF-IDF)", "Accuracy": 0.7068, "Precision": 0.705, "Recall": 0.7119, "F1": 0.7078}, 
+    {"Model": "LinearSVC (TF-IDF)", "Accuracy": 0.6986, "Precision": 0.7001, "Recall": 0.699, "F1": 0.6994}, 
+    {"Model": "RandomForest (TF-IDF)", "Accuracy": 0.6773, "Precision": 0.6869, "Recall": 0.6719, "F1": 0.6774}, 
+    {"Model": "BiLSTM+Attention (GloVe-Twitter)", "Accuracy": 0.7641, "Precision": 0.7621, "Recall": 0.7693, "F1": 0.7642}, 
+    {"Model": "CNN (Twitter SE+Attn)", "Accuracy": 0.7592, "Precision": 0.7571, "Recall": 0.7669, "F1": 0.7593}, 
+    {"Model": "RoBERTa feature extractor (LogReg head)", "Accuracy": 0.8869, "Precision": 0.8892, "Recall": 0.889, "F1": 0.8891}, 
+    {"Model": "RoBERTa feature extractor (LinearSVC head)", "Accuracy": 0.8842, "Precision": 0.8867, "Recall": 0.8861, "F1": 0.8863}, 
+    {"Model": "RoBERTa fine-tuned (twitter-roberta-base-sentiment-latest)", "Accuracy": 0.8978, "Precision": 0.8975, "Recall": 0.9011, "F1": 0.899},
+    {"Model": "Ensemble (Weighted Voting)", "Accuracy": 0.809, "Precision": 0.8063, "Recall": 0.8152, "F1": 0.809}, 
+    {"Model": "Ensemble (Majority Voting)", "Accuracy": 0.809, "Precision": 0.8063, "Recall": 0.8152, "F1": 0.809}
+]
