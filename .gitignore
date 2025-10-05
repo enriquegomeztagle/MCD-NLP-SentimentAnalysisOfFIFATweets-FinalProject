@@ -209,8 +209,14 @@ __marimo__/
 ########################## CUSTOM ##########################
 .DS_Store
 .vscode/
+
 DOCS/*
 !DOCS/main.tex
 !DOCS/main.pdf
+
 SCRITPS/roberta_finetuned/
 SCRITPS/cache_roberta_feats/
+SCRITPS/cnn_twitter_best.h5
+
+artifacts/cnn_twitter_best.h5
+SCRITPS/lstm_glove_best.h5
