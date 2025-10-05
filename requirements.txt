@@ -1,6 +1,32 @@
-kagglehub[hf-datasets]
-numpy
+# Core data science packages
+numpy==1.26.4
+scipy==1.12.0
 pandas
+
+# Visualization
 matplotlib
+seaborn
+
+# Machine learning
+scikit-learn==1.6.*
+
+# Deep learning and neural networks
+tensorflow==2.19.*
+tf-keras==2.19.*
+tensorflow-text==2.19.*
+tensorflow-decision-forests==1.12.*
+
+# NLP and text processing
 nltk
-scikit-learn
+gensim>=4.3,<4.4
+transformers
+torch
+accelerate
+
+# Data handling
+kagglehub[hf-datasets]
+datasets
+umap-learn>=0.5.9.post2
+
+# Progress bars and utilities
+tqdm
