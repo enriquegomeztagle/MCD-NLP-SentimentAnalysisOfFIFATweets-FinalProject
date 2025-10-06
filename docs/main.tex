@@ -26,15 +26,15 @@
 \newpage
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section*{Abstract}
-This project aims to perform sentiment analysis on tweets related to the FIFA World Cup 2022 using both traditional machine learning and deep learning models. 
+This project aimed to perform sentiment analysis on tweets related to the FIFA World Cup 2022 using both traditional machine learning and deep learning models. 
 The dataset contains $\approx25,000$ tweets collected on the first day of the tournament using the \texttt{Snscrape} library and pre-labeled with the\\ \texttt{cardiffnlp/twitter-roberta-base-sentiment-latest} model from Hugging Face.
-Classical approaches (e.g., Logistic Regression, SVM) using TF-IDF features are compared against neural architectures such as LSTM, CNN, and Transformer-based models. 
+Classical approaches (e.g., Logistic Regression, SVM) using TF-DF features are compared against neural architectures such as LSTM, CNN, and Transformer-based models. 
 Evaluation metrics include Accuracy, Precision, Recall, and F1-score. The results highlight how deep learning models outperform traditional ones in handling contextual nuances of tweets.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Introduction}
 The FIFA World Cup is one of the largest and most influential sporting events worldwide, attracting billions of viewers and generating massive engagement across digital platforms. During the 2022 edition in Qatar, social media—especially Twitter—became a real-time forum for fans to express opinions, emotions, and reactions to matches, players, and events. This global activity creates a rich source of textual data that can be leveraged to analyze public sentiment and collective emotional dynamics surrounding major sports events.
 
-Understanding the sentiment behind these tweets is important for several reasons. First, it provides valuable insights into fan behavior, public perception of teams and players, and the emotional impact of sporting events on different audiences. Second, sentiment analysis can assist broadcasters, sponsors, and organizations such as FIFA in gauging audience engagement and reputation trends. Finally, from a data science perspective, it represents a challenging Natural Language Processing (NLP) problem due to the informal, multilingual, and often sarcastic nature of social media text \cite{ref1, ref2, ref3}.
+Understanding the sentiment behind these tweets are important for several reasons. First, it provides valuable insights into fan behavior, public perception of teams and players, and the emotional impact of sporting events on different audiences. Second, sentiment analysis can assist broadcasters, sponsors, and organizations such as FIFA in gauging audience engagement and reputation trends. Finally, from a data science perspective, it represents a challenging Natural Language Processing (NLP) problem due to the informal, multilingual, and often sarcastic nature of social media text \cite{ref1, ref2, ref3}.
 
 Sentiment analysis, or opinion mining, aims to classify text into categories such as positive, negative, or neutral, based on the emotional tone conveyed by users. Previous research has explored a range of approaches—from traditional machine learning models such as Logistic Regression, Support Vector Machines (SVM), and Random Forests \cite{ref1} to deep learning architectures like Convolutional Neural Networks (CNN) and Long Short-Term Memory (LSTM) networks \cite{ref2}. More recently, transformer-based models such as BERT and RoBERTa have achieved state-of-the-art results in sentiment classification tasks on Twitter data \cite{ref3, ref4}.
 
@@ -43,7 +43,7 @@ Building upon this body of work, this project focuses on the sentiment analysis 
 \section{Related Work}
 Previous research on sentiment analysis of sports-related tweets has evolved significantly over the past decade, progressing from traditional machine learning approaches to deep neural and transformer-based architectures. 
 
-Early works (2016–2018) commonly employed statistical text representations such as Bag-of-Words and TF-IDF combined with models like Logistic Regression, Linear SVC, Random Forest and Bayesian Logistic Regression. For instance, Barnaghi et al. \cite{ref1} analyzed FIFA World Cup 2014 tweets using TF-IDF with Bayesian Logistic Regression, achieving competitive accuracy but later works noted limitations in capturing sarcasm and emoji-driven sentiment.
+Early works (2016–2018) commonly employed statistical text representations such as Bag-of-Words and TF-DF combined with models like Logistic Regression, Linear SVC, Random Forest and Bayesian Logistic Regression. For instance, Barnaghi et al. \cite{ref1} analyzed FIFA World Cup 2014 tweets using TF-DF with Bayesian Logistic Regression, achieving competitive accuracy but later works noted limitations in capturing sarcasm and emoji-driven sentiment.
 
 From 2018 onward, deep learning architectures such as CNN and LSTM began outperforming traditional classifiers in sentiment analysis tasks. Venkatesh et al. \cite{ref2} proposed a CNN-LSTM hybrid for classifying sports tweets, demonstrating that combining convolutional and recurrent layers improved contextual understanding.
 
@@ -87,9 +87,9 @@ $IR=\frac{\max_c n_c}{\min_c n_c}=1.47$ stayed below the predefined threshold ($
 \end{figure}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Feature Extraction}
-After preprocessing, the data was split with a stratified 80/20 train--test partition (\texttt{random\_state=42}).
+After preprocessing, the data was split with a stratified 80-20 train--test partition (\texttt{random\_state=42}).
 
-\paragraph{Protocol (no leakage \& reproducibility).}x
+\paragraph{Protocol (no leakage \& reproducibility).}
 All vectorizers/tokenizers were \textbf{fit exclusively on the training split} and then reused to transform
 validation/test without refitting or peeking at test labels. Random seeds were fixed for reproducibility
 (Python \texttt{random}, NumPy, TensorFlow, and PyTorch) and used the same stratified splits across all models.
@@ -106,7 +106,7 @@ the learned vocabulary and index mapping were reused as-is for validation/test.
 
 \paragraph{Transformer representations.}
 \textbf{cardiffnlp/twitter-roberta-base-sentiment-latest} was used in two modes:
-\textit{Tokenizer/splits:} the Hugging Face tokenizer was fine-tunned in the training split.
+Tokenizer/splits: the Hugging Face tokenizer is pre-trained and not fitted; fine-tuning uses only the training split.
 \begin{enumerate}
   \item \textbf{Feature extractor:} backbone was frozen and compute sentence embeddings with masked mean-pooling over the last hidden states (max length 96 tokens, batch size 64, \texttt{no\_grad}). Train/test embeddings are cached to \texttt{.npy}.
   \item \textbf{Fine-tuning:} tokenization to 128 tokens and train a classification head end-to-end using \texttt{Trainer}.
@@ -259,7 +259,7 @@ When using RoBERTa as a frozen feature extractor, visualization of test-set embe
 The UMAP of mean-pooled RoBERTa embeddings on the test set shows well-separated clusters for positive and negative, while neutral occupies a transitional region with more overlap. This suggests the transformer captures polarity clearly, with remaining ambiguity concentrated around the neutral boundary.
 
 \paragraph{Traditional vs.\ deep vs.\ transformers.}
-At a glance (Table~\ref{tab:model-comparison}), TF--IDF baselines are lowest (macro-F1 $0.677$--$0.708$), GloVe-based neural models close part of the gap ($0.759$--$0.764$), and transformer variants lead ($0.889$ with frozen RoBERTa + LR; $0.899$ with fine-tuning). Simple voting ensembles ($0.809$) did not outperform the best single model. Interpretation of this results is deferred to Section~\ref{sec:discussion}.
+At a glance (Table~\ref{tab:model-comparison}), TF--IDF baselines are lowest (macro-F1 $0.677$--$0.708$), GloVe-based neural models close part of the gap ($0.759$--$0.764$), and transformer variants lead ($0.889$ with frozen RoBERTa + LR; $0.899$ with fine-tuning). Simple voting ensembles ($0.809$) did not outperform the best single model. Interpretation of these results is deferred to Section~\ref{sec:discussion}.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Discussion}\label{sec:discussion}
 
@@ -269,12 +269,12 @@ Both ensemble variants (weighted and majority voting) reached macro-F1 $=0.809$,
 
 \subsection{Strengths and Weaknesses}
 \paragraph{Strengths.} 
-(i) A Twitter-aware preprocessing pipeline preserves emojis/emoticons and hashtag semantics; (ii) the study spans three modeling families (TF--IDF, GloVe-based neural, transformers) for a fair comparison; (iii) careful training (class weights, staged unfreezing, cosine restarts) stabilizes neural models; (iv) full reproducibility: seeds, cached embeddings, and exported artifacts (tables/figures).
+(i) A Twitter-aware preprocessing pipeline preserves emojis/emoticons and hashtag semantics; (ii) the study spans three modeling families (TF--IDF, GloVe-based neural, transformers) for a fair comparison; (iii) careful training (class weights, staged unfreezing, cosine restarts) stabilize neural models; (iv) full reproducibility: seeds, cached embeddings, and exported artifacts (tables/figures).
 \paragraph{Weaknesses.}
 (i) The naive voting ensembles (fixed weights/majority) underperformed the best single transformer, indicating limited error complementarity or poor weighting; (ii) compute cost: transformer fine-tuning is heavier than TF--IDF/Glove baselines.
 
 \subsection{Limitations}
-This study has several limitations. First, labels are derived from \texttt{cardiffnlp/twitter-roberta-base-sentiment-latest}, which was also used as a backbone; this ``teacher--student'' setup can bias evaluation toward transformer variants that approximate the teacher's decision boundary. Second, the dataset covers only the first day of the tournament, limiting topical and temporal diversity. Third, global tweets are likely multilingual, while this study worked in English, it may not perform in the same way with other languages.
+This study has several limitations. First, labels are derived from \texttt{cardiffnlp/twitter-roberta-base-sentiment-latest}, which was also used as a backbone; this ``teacher--student'' setup can bias evaluation toward transformer variants that approximate the teacher's decision boundary. Second, the dataset covers only the first day of the tournament, limiting topical and temporal diversity. Third, global tweets are likely multilingual, while this study focused on English tweets, the approach may not generalize equally well to other languages.
 
 \paragraph{Compute constraints.}
 Training was under limited GPU memory and time on a single device, which constrained batch sizes, sequence lengths, and training schedules. Consequently, it was not possible to run extensive hyperparameter sweeps or multi-seed cross-validation, nor explore larger backbones (e.g., RoBERTa-large, DeBERTa-v3-large, XLM-Roberta large), longer-context inputs, or calibration-aware/stacked ensembles. These restrictions likely cap absolute performance and stability, so the reported scores should be viewed as conservative lower bounds.
