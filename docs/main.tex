@@ -28,7 +28,7 @@
 \section*{Abstract}
 This project aims to perform sentiment analysis on tweets related to the FIFA World Cup 2022 using both traditional machine learning and deep learning models. 
 The dataset contains $\approx25,000$ tweets collected on the first day of the tournament using the \texttt{Snscrape} library and pre-labeled with the\\ \texttt{cardiffnlp/twitter-roberta-base-sentiment-latest} model from Hugging Face.
-We compare classical approaches (e.g., Logistic Regression, SVM) using TF-IDF features against neural architectures such as LSTM, CNN, and Transformer-based models. 
+Classical approaches (e.g., Logistic Regression, SVM) using TF-IDF features are compared against neural architectures such as LSTM, CNN, and Transformer-based models. 
 Evaluation metrics include Accuracy, Precision, Recall, and F1-score. The results highlight how deep learning models outperform traditional ones in handling contextual nuances of tweets.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Introduction}
@@ -78,7 +78,7 @@ A whitelist of characters ensures that only meaningful alphanumeric and sentimen
 Finally, redundant spaces are removed, resulting in clean and normalized text ready for tokenization and embedding generation.
 \paragraph{Balancing.}
 Re-balancing techniques were not applied because the class distribution was moderately balanced: \textit{Positive} $n=8{,}489$ (37.7\%), \textit{Neutral} $n=8{,}251$ (36.6\%), and \textit{Negative} $n=5{,}784$ (25.7\%), for a total of $N=22{,}524$. The imbalance ratio
-$IR=\frac{\max_c n_c}{\min_c n_c}=1.47$ stayed below our predefined threshold ($IR<1.5$), so we trained without resampling and simply monitored per-class metrics.
+$IR=\frac{\max_c n_c}{\min_c n_c}=1.47$ stayed below the predefined threshold ($IR<1.5$), so models were trained without resampling and simply monitored per-class metrics.
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.6\linewidth]{../SCRITPS/artifacts/figures/class_distribution_full.png}
@@ -91,16 +91,16 @@ After preprocessing, the data was split with a stratified 80/20 train--test part
 
 \paragraph{Protocol (no leakage \& reproducibility).}x
 All vectorizers/tokenizers were \textbf{fit exclusively on the training split} and then reused to transform
-validation/test without refitting or peeking at test labels. We fixed random seeds for reproducibility
+validation/test without refitting or peeking at test labels. Random seeds were fixed for reproducibility
 (Python \texttt{random}, NumPy, TensorFlow, and PyTorch) and used the same stratified splits across all models.
 
 \paragraph{Statistical representations.}
-For traditional ML models, we use a TF--IDF vectorizer with \textit{max\_features} $=50{,}000$, n-grams $(1,3)$, \textit{min\_df}$=2$, and English stopwords. The resulting sparse matrix feeds Logistic Regression, Linear SVM, and Random Forest.
+For traditional ML models, a TF--IDF vectorizer was used with \textit{max\_features} $=50{,}000$, n-grams $(1,3)$, \textit{min\_df}$=2$, and English stopwords. The resulting sparse matrix feeds Logistic Regression, Linear SVM, and Random Forest.
 \textit{Leakage control:} the TF--IDF vectorizer was fit on the \textbf{training texts only} and then applied
 unchanged to validation/test.
 
 \paragraph{Semantic representations (word embeddings).}
-For sequence models, we use \textbf{GloVe-Twitter-200} (via \texttt{gensim}). A Keras \textit{Tokenizer} (\textit{num\_words}$=50{,}000$, explicit \texttt{<OOV>}) builds the vocabulary; sequences are padded/truncated to $L=180$. The embedding matrix is aligned to this vocab, with zero vector at the padding index and the \texttt{<OOV>} vector set to the mean of known embeddings.
+For sequence models, \textbf{GloVe-Twitter-200} (via \texttt{gensim}) was used. A Keras \textit{Tokenizer} (\textit{num\_words}$=50{,}000$, explicit \texttt{<OOV>}) builds the vocabulary; sequences are padded/truncated to $L=180$. The embedding matrix is aligned to this vocab, with zero vector at the padding index and the \texttt{<OOV>} vector set to the mean of known embeddings.
 \textit{Vocabulary policy:} the Keras \texttt{Tokenizer} was fit on the \textbf{training split only};
 the learned vocabulary and index mapping were reused as-is for validation/test.
 
@@ -130,7 +130,7 @@ All models are trained on the TF--IDF features and evaluated with macro-averaged
   \item \textbf{Embedding:} GloVe-Twitter-200 matrix (frozen in Stage~1; unfrozen in Stage~2).
   \item \textbf{Trunk:} five \texttt{Conv1D} branches (128 filters; kernel sizes $\{2,3,4,5,7\}$), each followed by \texttt{BatchNorm} and \texttt{ReLU}.
   \item \textbf{SE-block:} channel-wise recalibration with reduction ratio $r=8$.
-  \item \textbf{Attention pooling:} per branch, we concatenate global max-pooling, global average-pooling, and a softmax-weighted sum across time.
+  \item \textbf{Attention pooling:} per branch, concatenating global max-pooling, global average-pooling, and a softmax-weighted sum across time.
   \item \textbf{Head:} concatenation $\rightarrow$ \texttt{Dropout}(0.4) $\rightarrow$ \texttt{Dense}(192, ReLU, L2=$10^{-4}$) $\rightarrow$ \texttt{Dropout}(0.4) $\rightarrow$ \texttt{Dense}(\#classes, softmax).
   \item \textbf{Training:} \texttt{sparse\_categorical\_crossentropy}, \texttt{Adam}. \textit{Stage 1}: \texttt{lr}$=10^{-3}$, batch 128, val split 0.1, \texttt{EarlyStopping(patience=3)} + \texttt{ReduceLROnPlateau}(factor 0.5, patience 2, \texttt{min\_lr}$=10^{-5}$).
         \textit{Stage 2}: unfreeze embeddings and add class weights, \texttt{lr}$=10^{-4}$, \texttt{clipnorm}$=1.0$.
@@ -141,26 +141,26 @@ All models are trained on the TF--IDF features and evaluated with macro-averaged
 \texttt{BiLSTM\_Attn} architecture:
 \begin{itemize}
   \item \textbf{Input/Embedding:} same as CNN (GloVe embeddings, $L=180$, \texttt{mask\_zero}).
-  \item \textbf{Trunk:} \texttt{SpatialDropout1D}(0.2) $\rightarrow$ \texttt{BiLSTM}(96, \texttt{return\_sequences}) $\rightarrow$ \texttt{BiLSTM}(64, \texttt{return\_sequences}); no recurrent dropout in our runs.
-  \item \textbf{Attention pooling:} tanh projection $\rightarrow$ 1D score $\rightarrow$ temporal softmax; we concatenate attention-weighted sum with global max/avg pooling.
+  \item \textbf{Trunk:} \texttt{SpatialDropout1D}(0.2) $\rightarrow$ \texttt{BiLSTM}(96, \texttt{return\_sequences}) $\rightarrow$ \texttt{BiLSTM}(64, \texttt{return\_sequences}); no recurrent dropout in the runs.
+  \item \textbf{Attention pooling:} tanh projection $\rightarrow$ 1D score $\rightarrow$ temporal softmax; concatenating attention-weighted sum with global max/avg pooling.
   \item \textbf{Head:} \texttt{Dropout}(0.4) $\rightarrow$ \texttt{Dense}(128, ReLU, L2=$10^{-4}$) $\rightarrow$ \texttt{Dropout}(0.4) $\rightarrow$ \texttt{Dense}(\#classes, softmax).
   \item \textbf{Training:} three stages mirroring the CNN: Stage~1 \texttt{Adam} (\texttt{lr}$=10^{-3}$); Stage~2 unfreezes embeddings and adds class weights with \texttt{Adam} (\texttt{lr}$=10^{-4}$, \texttt{clipnorm}$=1.0$); Stage~3 uses \texttt{CosineDecayRestarts} (\texttt{lr}$=5\!\times\!10^{-5}$).
 \end{itemize}
 
 \paragraph{Transformers (RoBERTa).}
 \begin{itemize}
-  \item \textbf{Feature extractor + heads:} with the backbone frozen, we compute mean-pooled embeddings (96 tokens). On top, we train (i) Logistic Regression (\texttt{max\_iter}$=2000$, \texttt{C}$=1.0$) and (ii) LinearSVC (\texttt{C}$=1.0$).
+  \item \textbf{Feature extractor + heads:} with the backbone frozen, mean-pooled embeddings computation was performed (96 tokens). On top, (i) Logistic Regression (\texttt{max\_iter}$=2000$, \texttt{C}$=1.0$) and (ii) LinearSVC (\texttt{C}$=1.0$) were trained.
   \item \textbf{Fine-tuning:} \texttt{AutoModelForSequenceClassification} with explicit \texttt{id2label}/\texttt{label2id}; tokenization to 128 tokens.
-        \texttt{TrainingArguments}: \texttt{learning\_rate}$=2\cdot10^{-5}$, \texttt{per\_device\_train\_batch\_size}$=16$, \texttt{per\_device\_eval\_batch\_size}$=32$, \texttt{num\_train\_epochs}$=3$, \texttt{weight\_decay}$=0.01$, \texttt{save\_total\_limit}$=1$, \texttt{report\_to=none}. We report macro accuracy, precision, recall, and F1.
+        \texttt{TrainingArguments}: \texttt{learning\_rate}$=2\cdot10^{-5}$, \texttt{per\_device\_train\_batch\_size}$=16$, \texttt{per\_device\_eval\_batch\_size}$=32$, \texttt{num\_train\_epochs}$=3$, \texttt{weight\_decay}$=0.01$, \texttt{save\_total\_limit}$=1$, \texttt{report\_to=none}. In this report, macro accuracy, precision, recall, and F1 are reported.
 \end{itemize}
 
 \paragraph{Ensemble.}
-We aggregate per-example predictions using two strategies: (i) \textbf{weighted voting} with fixed weights $\{w_{\text{RoBERTa}}=0.90,\,w_{\text{BiLSTM}}=0.76,\,w_{\text{CNN}}=0.75\}$ and a tie-breaker that favors RoBERTa; and (ii) \textbf{majority voting} (three equal votes with the same tie-break rule). We report both and retain the one with the best macro F1.
+Per-example predictions were aggregated using two strategies: (i) \textbf{weighted voting} with fixed weights $\{w_{\text{RoBERTa}}=0.90,\,w_{\text{BiLSTM}}=0.76,\,w_{\text{CNN}}=0.75\}$ and a tie-breaker that favors RoBERTa; and (ii) \textbf{majority voting} (three equal votes with the same tie-break rule). Both were reported and the one with the best macro F1 was retained.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Experiments and Results}
 
 \subsection{Evaluation Metrics}
-We evaluate models with \emph{accuracy}, \emph{precision}, \emph{recall}, and \emph{F1-score}. Let $\{(x_i,y_i)\}_{i=1}^N$ be labeled examples with $y_i \in \mathcal{C}=\{\texttt{negative},\texttt{neutral},\texttt{positive}\}$ and predictions $\hat{y}_i$.
+Models were evaluated with \emph{accuracy}, \emph{precision}, \emph{recall}, and \emph{F1-score}. Let $\{(x_i,y_i)\}_{i=1}^N$ be labeled examples with $y_i \in \mathcal{C}=\{\texttt{negative},\texttt{neutral},\texttt{positive}\}$ and predictions $\hat{y}_i$.
 
 \paragraph{Accuracy.}
 \[
@@ -176,7 +176,7 @@ For each class $c\in\mathcal{C}$, define true positives $\mathrm{TP}_c$, false p
 \]
 
 \paragraph{Macro-averaging.}
-To avoid dominance by frequent classes, we report \emph{macro} metrics:
+To avoid dominance by frequent classes, \emph{macro} metrics were used:
 \[
 \mathrm{Prec}_{\mathrm{macro}}=\frac{1}{|\mathcal{C}|}\sum_{c\in\mathcal{C}} \mathrm{Prec}_c,\quad
 \mathrm{Rec}_{\mathrm{macro}}=\frac{1}{|\mathcal{C}|}\sum_{c\in\mathcal{C}} \mathrm{Rec}_c,\quad
@@ -186,7 +186,7 @@ All metrics are computed with \texttt{scikit-learn} using the label order \textt
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Results Comparison}
 \paragraph{Model leaderboard.}
-We compare traditional, deep, and transformer-based models on the test split. Table~\ref{tab:model-comparison} summarizes macro metrics; Figure~\ref{fig:model-f1-comparison} visualizes macro-F1 across models.
+Traditional, deep, and transformer-based models on the test split were compared. Table~\ref{tab:model-comparison} summarizes macro metrics; Figure~\ref{fig:model-f1-comparison} visualizes macro-F1 across models.
 
 \begin{table}[H]
   \centering
@@ -203,7 +203,7 @@ We compare traditional, deep, and transformer-based models on the test split. Ta
 \end{figure}
 
 \paragraph{Per-class analysis.}
-For the best model (top row in Table~\ref{tab:model-comparison}), we report its confusion matrix and per-class metrics:
+For the best model (top row in Table~\ref{tab:model-comparison}), its confusion matrix and per-class metrics are reported here:
 \begin{figure}[H]
   \centering
   \includegraphics[width=.80\linewidth]{../SCRITPS/artifacts/figures/best_model_cm.png}
@@ -220,7 +220,7 @@ For the best model (top row in Table~\ref{tab:model-comparison}), we report its 
 \end{table}
 
 \paragraph{Probability-based curves.}
-For models that output class probabilities (e.g., Logistic Regression, Random Forest, CNN, BiLSTM, RoBERTa heads and fine-tuned), we plot macro ROC and macro PR curves that are available in the Repository.\\
+For models that output class probabilities (e.g., Logistic Regression, Random Forest, CNN, BiLSTM, RoBERTa heads and fine-tuned), plot reporting macro ROC and macro PR curves are available in the Repository.\\
 The figure below shows the macro ROC curve for the fine-tuned RoBERTa model.
 \begin{figure}[H]
   \centering
@@ -238,7 +238,7 @@ The figure below shows the macro ROC curve for the fine-tuned RoBERTa model.
 The macro ROC curve hugs the top-left corner (AUC $\approx 0.98$), reflecting strong class-averaged discrimination. Across reasonable thresholds, the model attains high true-positive rates at low false-positive rates for most classes.
 
 \paragraph{Training dynamics.}
-We report training/validation curves for neural models to show convergence and regularization behavior:
+Training/validation curves for neural models were reported to show convergence and regularization behavior:
 \begin{figure}[H]
   \centering
   \includegraphics[width=.70\linewidth]{../SCRITPS/artifacts/figures/bilstm+attention_lstm_stage1_acc.png}
@@ -249,7 +249,7 @@ We report training/validation curves for neural models to show convergence and r
 Stage-1 learning curves exhibit steady convergence: validation accuracy rises and validation loss falls over epochs. The train–val gap stays small, indicating regularization (dropout/L2) plus early stopping effectively limit overfitting.
 
 \paragraph{Representation analysis}
-When using RoBERTa as a frozen feature extractor, we visualize test-set embeddings with UMAP to inspect class separability:
+When using RoBERTa as a frozen feature extractor, visualization of test-set embeddings with UMAP was used to inspect class separability:
 \begin{figure}[H]
   \centering
   \includegraphics[width=.75\linewidth]{../SCRITPS/artifacts/figures/roberta_fe_test_umap.png}
@@ -259,7 +259,7 @@ When using RoBERTa as a frozen feature extractor, we visualize test-set embeddin
 The UMAP of mean-pooled RoBERTa embeddings on the test set shows well-separated clusters for positive and negative, while neutral occupies a transitional region with more overlap. This suggests the transformer captures polarity clearly, with remaining ambiguity concentrated around the neutral boundary.
 
 \paragraph{Traditional vs.\ deep vs.\ transformers.}
-At a glance (Table~\ref{tab:model-comparison}), TF--IDF baselines are lowest (macro-F1 $0.677$--$0.708$), GloVe-based neural models close part of the gap ($0.759$--$0.764$), and transformer variants lead ($0.889$ with frozen RoBERTa + LR; $0.899$ with fine-tuning). Simple voting ensembles ($0.809$) did not outperform the best single model. We keep this section descriptive and defer interpretation to Section~\ref{sec:discussion}.
+At a glance (Table~\ref{tab:model-comparison}), TF--IDF baselines are lowest (macro-F1 $0.677$--$0.708$), GloVe-based neural models close part of the gap ($0.759$--$0.764$), and transformer variants lead ($0.889$ with frozen RoBERTa + LR; $0.899$ with fine-tuning). Simple voting ensembles ($0.809$) did not outperform the best single model. Interpretation of this results is deferred to Section~\ref{sec:discussion}.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Discussion}\label{sec:discussion}
 
@@ -274,16 +274,16 @@ Both ensemble variants (weighted and majority voting) reached macro-F1 $=0.809$,
 (i) The naive voting ensembles (fixed weights/majority) underperformed the best single transformer, indicating limited error complementarity or poor weighting; (ii) compute cost: transformer fine-tuning is heavier than TF--IDF/Glove baselines.
 
 \subsection{Limitations}
-This study has several limitations. First, labels are derived from \texttt{cardiffnlp/twitter-roberta-base-sentiment-latest}, which we also use as a backbone; this ``teacher--student'' setup can bias evaluation toward transformer variants that approximate the teacher's decision boundary. Second, the dataset covers only the first day of the tournament, limiting topical and temporal diversity. Third, global tweets are likely multilingual, while this study worked in English, it may not perform in the same way with other languages.
+This study has several limitations. First, labels are derived from \texttt{cardiffnlp/twitter-roberta-base-sentiment-latest}, which was also used as a backbone; this ``teacher--student'' setup can bias evaluation toward transformer variants that approximate the teacher's decision boundary. Second, the dataset covers only the first day of the tournament, limiting topical and temporal diversity. Third, global tweets are likely multilingual, while this study worked in English, it may not perform in the same way with other languages.
 
 \paragraph{Compute constraints.}
-We trained under limited GPU memory and time on a single device, which constrained batch sizes, sequence lengths, and training schedules. Consequently, we could not run extensive hyperparameter sweeps or multi-seed cross-validation, nor explore larger backbones (e.g., RoBERTa-large, DeBERTa-v3-large, XLM-Roberta large), longer-context inputs, or calibration-aware/stacked ensembles. These restrictions likely cap absolute performance and stability, so the reported scores should be viewed as conservative lower bounds.
+Training was under limited GPU memory and time on a single device, which constrained batch sizes, sequence lengths, and training schedules. Consequently, it was not possible to run extensive hyperparameter sweeps or multi-seed cross-validation, nor explore larger backbones (e.g., RoBERTa-large, DeBERTa-v3-large, XLM-Roberta large), longer-context inputs, or calibration-aware/stacked ensembles. These restrictions likely cap absolute performance and stability, so the reported scores should be viewed as conservative lower bounds.
 
 \subsection{Future Work}
 (i) Evaluate cross-domain generalization (other tournament days, clubs, other sports) and cross-lingual robustness (e.g., XLM-T, mDeBERTa, or multilingual RoBERTa); (iii) replace naive voting with calibrated stacking: temperature scaling/Platt scaling per model, then a meta-learner on per-class probabilities; (iv) ablations on preprocessing (emoji/hashtag handling), sequence length, and embedding choices; (v) explore larger or instruction-tuned transformers and prompt-based zero-/few-shot setups; (vi) address \emph{neutral} with margin-aware losses or focal loss and targeted augmentation for borderline cases.
 
 \subsection{Concluding Remarks}
-Our study confirms the advantage of transformer-based representations for Twitter sentiment: most gains stem from domain-pretrained RoBERTa features, with fine-tuning providing a small but reliable boost—particularly on ambiguous tweets. Classic TF--IDF and GloVe-based neural models remain competitive as efficient baselines, yet they struggle on \emph{neutral}.\\
+This study confirms the advantage of transformer-based representations for Twitter sentiment: most gains stem from domain-pretrained RoBERTa features, with fine-tuning providing a small but reliable boost—particularly on ambiguous tweets. Classic TF--IDF and GloVe-based neural models remain competitive as efficient baselines, yet they struggle on \emph{neutral}.\\
 Future work should prioritize cross-sports-domain and cross-lingual generalization, calibration-aware stacking over naive voting, systematic ablations of preprocessing/sequence length/embeddings, scaling to larger or instruction-tuned transformers and prompt-based zero/few-shot setups, and strengthening the \emph{neutral} boundary via margin-aware or focal losses with targeted augmentation.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{thebibliography}{9}
